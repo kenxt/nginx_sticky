@@ -1,6 +1,6 @@
 FROM alpine:3.8
 
-LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
+LABEL maintainer="NGINX Docker Maintainers <etc.sjtu.edu.cn>"
 
 ENV NGINX_VERSION 1.14.2
 ENV STICKY_VERSION master
@@ -64,7 +64,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		gd-dev \
 		geoip-dev \
                 unzip \
-       # && curl -sfSL https://bitbucket.org/nginx-goodies/nginx-sticky-module-ng/get/$STICKY_VERSION.zip -o sticky.zip \
         && curl -sfSL https://v.sjtu.edu.cn/uploadimg/file/$STICKY_VERSION.zip -o sticky.zip \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o nginx.tar.gz.asc \
