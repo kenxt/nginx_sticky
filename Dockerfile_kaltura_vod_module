@@ -1,7 +1,7 @@
 FROM alpine:3.8
 LABEL maintainer="NGINX Docker Maintainers <etc.sjtu.edu.cn>"
 ENV NGINX_VERSION 1.14.2
-ENV STICKY_VERSION master
+ENV NGINX_RTMP master
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& CONFIG="\
 		--prefix=/etc/nginx \
@@ -45,7 +45,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		--with-file-aio \
     --with-cc-opt="-O3"
 		--with-http_v2_module \
-    --add-module=/usr/src/nginx-sticky-module \
+    --add-module=/usr/src/nginx-rtmp-module/nginx-rtmp-module-master \
     --add-module=usr/src/nginx-vod-module \
 	" \
 	&& addgroup -S nginx \
@@ -64,7 +64,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		gd-dev \
 		geoip-dev \
     unzip \
-  && curl -sfSL https://v.sjtu.edu.cn/uploadimg/file/$STICKY_VERSION.zip -o sticky.zip \
+  && curl -sfSL https://github.com/arut/nginx-rtmp-module/archive/$NGINX_RTMP.zip -o nginx_rtmp.zip \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
 	&& curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o nginx.tar.gz.asc \
 	&& export GNUPGHOME="$(mktemp -d)" \
@@ -83,11 +83,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
 	&& rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
 	&& mkdir -p /usr/src \
-  && unzip -j sticky.zip -d /usr/src/nginx-sticky-module \  
-	# @TODO: check if sources change location "/usr/include/openssl"
-  && sed -i '/#include <ngx_sha1.h>/a#include <openssl/md5.h>' /usr/src/nginx-sticky-module/ngx_http_sticky_misc.c \
-  && sed -i '/#include <ngx_sha1.h>/a#include <openssl/sha.h>' /usr/src/nginx-sticky-module/ngx_http_sticky_misc.c \
-  && cat /usr/src/nginx-sticky-module/ngx_http_sticky_misc.c | head -n 15 \
+  && unzip -j nginx_rtmp.zip -d /usr/src/nginx-rtmp-module \  
 	&& tar -zxC /usr/src -f nginx.tar.gz \
 	&& rm nginx.tar.gz \
   && cd /usr/src
@@ -99,8 +95,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& mv objs/nginx objs/nginx-debug \
 	&& mv objs/ngx_http_xslt_filter_module.so objs/ngx_http_xslt_filter_module-debug.so \
 	&& mv objs/ngx_http_image_filter_module.so objs/ngx_http_image_filter_module-debug.so \
-	&& mv objs/ngx_http_geoip_module.so objs/ngx_http_geoip_module-debug.so \
-	&& mv objs/ngx_stream_geoip_module.so objs/ngx_stream_geoip_module-debug.so \
+	&& mv objs/ngx_http_geoip_module.so objs/ngx_http_geoip_module-debug.so \	
 	&& ./configure $CONFIG \
 	&& make -j$(getconf _NPROCESSORS_ONLN) \
 	&& make install \
@@ -112,12 +107,13 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& install -m755 objs/nginx-debug /usr/sbin/nginx-debug \
 	&& install -m755 objs/ngx_http_xslt_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_xslt_filter_module-debug.so \
 	&& install -m755 objs/ngx_http_image_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_image_filter_module-debug.so \
-	&& install -m755 objs/ngx_http_geoip_module-debug.so /usr/lib/nginx/modules/ngx_http_geoip_module-debug.so \
-	&& install -m755 objs/ngx_stream_geoip_module-debug.so /usr/lib/nginx/modules/ngx_stream_geoip_module-debug.so \
+	&& install -m755 objs/ngx_http_geoip_module-debug.so /usr/lib/nginx/modules/ngx_http_geoip_module-debug.so \	
 	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
 	&& strip /usr/sbin/nginx* \
 	&& strip /usr/lib/nginx/modules/*.so \
 	&& rm -rf /usr/src/nginx-$NGINX_VERSION \
+	&& rm -f /usr/src/*.zip \
+	&& rm -f /usr/src/*.gz \
 	\
 	# Bring in gettext so we can get `envsubst`, then throw
 	# the rest away. To do this, we need to install `gettext`
